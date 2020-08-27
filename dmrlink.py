@@ -987,6 +987,10 @@ class IPSC(DatagramProtocol):
             self.peer_list_req(_peerid)
             return
 
+        # F0 packet
+        elif _packettype == PEER_F0:
+            return
+
         # PACKET IS OF AN UNKNOWN TYPE. LOG IT AND IDENTTIFY IT!
         else:
             self.unknown_message(_packettype, _peerid, data)

@@ -31,7 +31,7 @@ PEER_ALIVE_REQ        = '\x98' # Peer keep alive request
 PEER_ALIVE_REPLY      = '\x99' # Peer keep alive reply
 DE_REG_REQ            = '\x9A' # Request de-registration from system
 DE_REG_REPLY          = '\x9B' # De-registration reply
-
+PEER_F0               = '\xF0' # De-registration reply
 # IPSC Version Information
 IPSC_VER_14           = '\x00'
 IPSC_VER_15           = '\x00'
@@ -50,7 +50,7 @@ BURST_DATA_TYPE = {
     'VOICE_HEAD':  '\x01',
     'VOICE_TERM':  '\x02',
     'SLOT1_VOICE': '\x0A',
-    'SLOT2_VOICE': '\x8A'   
+    'SLOT2_VOICE': '\x8A'
 }
 
 # IPSC Version and Link Type are Used for a 4-byte version field in registration packets
@@ -92,7 +92,7 @@ TYPE = {
     '\x4B': 'Radio Enable Request',
     '\x4C': 'Radio Enable Received',
     '\x4D': 'Remote Monitor Request',
-    '\x4E': 'Remote Monitor Request Received', #(doesn't mean it was successful) 
+    '\x4E': 'Remote Monitor Request Received', #(doesn't mean it was successful)
     '\x4D': 'Remote Monitor Request',
     '\x4F': 'Group Voice',
     '\x50': 'Private Voice',
@@ -134,5 +134,5 @@ BURST_DATA_TYPE = {
     'VOICE_HEAD':  '\x01',
     'VOICE_TERM':  '\x02',
     'SLOT1_VOICE': '\x0A',
-    'SLOT2_VOICE': '\x8A'   
+    'SLOT2_VOICE': '\x8A'
 }
