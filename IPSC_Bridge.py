@@ -32,7 +32,7 @@ from bitstring import BitArray
 import sys, socket, ConfigParser, thread, traceback
 import cPickle as pickle
 
-from dmrlink import IPSC, systems, config_reports, reportFactory 
+from dmrlink import IPSC, systems, config_reports, reportFactory
 from dmr_utils.utils import int_id, hex_str_3, hex_str_4, get_alias, get_info
 
 from time import time, sleep, clock, localtime, strftime
@@ -70,27 +70,27 @@ class ambeIPSC(IPSC):
     _gateway = "127.0.0.1"                              # IP address of  app
     _gateway_port = 31000                               # Port Analog_Bridge is listening on for AMBE frames to decode
     _ambeRxPort = 31003                                 # Port to listen on for AMBE frames to transmit to all peers
-    
+
     _busy_slots = [0,0,0]                               # Keep track of activity on each slot.  Make sure app is polite
 
     _currentNetwork = ""
-    cc = 1
+    _cc = 1
 
     ###### DEBUGDEBUGDEBUG
     #_d = None
     ###### DEBUGDEBUGDEBUG
-    
+
     def __init__(self, _name, _config, _logger, _report):
         IPSC.__init__(self, _name, _config, _logger, _report)
-        
+
         #
         # Define default values for operation.  These will be overridden by the .cfg file if found
         #
-        
+
         self._configFile=cli_args.BRIDGE_CONFIG_FILE
         self._currentNetwork = str(_name)
         self.readConfigFile(self._configFile, None, self._currentNetwork)
-    
+
         logger.info('DMRLink IPSC Bridge')
 
         self.ipsc_ambe = AMBE_IPSC(self, _name, _config, _logger, self._ambeRxPort)
@@ -119,7 +119,7 @@ class ambeIPSC(IPSC):
         config = ConfigParser.ConfigParser()
         try:
             config.read(configFileName)
-            
+
             if sec == None:
                 sec = self.defaultOption(config, 'DEFAULTS', 'section', networkName)
             if config.has_section(sec) == False:
@@ -130,7 +130,7 @@ class ambeIPSC(IPSC):
             self._gateway_port = int(self.defaultOption(config, sec,'toGatewayPort', self._gateway_port))
 
             self._ambeRxPort = int(self.defaultOption(config, sec,'fromGatewayPort', self._ambeRxPort))
-
+            self._cc = int(self.defaultOption(config, sec,'CC', self._cc))
         except ConfigParser.NoOptionError as e:
             print('Using a default value:', e)
         except:
@@ -169,7 +169,7 @@ class ambeIPSC(IPSC):
     #     Debug: print IPSC frame on console
     #************************************************
     def dumpIPSCFrame( self, _frame ):
-        
+
         _packettype     = int_id(_frame[0:1])                 # int8  GROUP_VOICE, PVT_VOICE, GROUP_DATA, PVT_DATA, CALL_MON_STATUS, CALL_MON_RPT, CALL_MON_NACK, XCMP_XNL, RPT_WAKE_UP, DE_REG_REQ
         _peerid         = int_id(_frame[1:5])                 # int32 peer who is sending us a packet
         _ipsc_seq       = int_id(_frame[5:6])                 # int8  looks like a sequence number for a packet
@@ -178,23 +178,23 @@ class ambeIPSC(IPSC):
         _call_type      = int_id(_frame[12:13])               # int8 Priority Voice/Data
         _call_ctrl_info  = int_id(_frame[13:17])              # int32
         _call_info      = int_id(_frame[17:18])               # int8  Bits 6 and 7 defined as TS and END
-        
+
         # parse out the RTP values
         _rtp_byte_1 = int_id(_frame[18:19])                 # Call Ctrl Src
         _rtp_byte_2 = int_id(_frame[19:20])                 # Type
         _rtp_seq    = int_id(_frame[20:22])                 # Call Seq No
         _rtp_tmstmp = int_id(_frame[22:26])                 # Timestamp
         _rtp_ssid   = int_id(_frame[26:30])                 # Sync Src Id
-        
+
         _payload_type   = _frame[30]                       # int8  VOICE_HEAD, VOICE_TERM, SLOT1_VOICE, SLOT2_VOICE
-        
+
         _ts             = bool(_call_info & TS_CALL_MSK)
         _end            = bool(_call_info & END_MSK)
 
         if _payload_type == BURST_DATA_TYPE['VOICE_HEAD']:
             print('HEAD:', h(_frame))
         if _payload_type == BURST_DATA_TYPE['VOICE_TERM']:
-            
+
             _ipsc_rssi_threshold_and_parity = int_id(_frame[31])
             _ipsc_length_to_follow = int_id(_frame[32:34])
             _ipsc_rssi_status = int_id(_frame[34])
@@ -218,7 +218,7 @@ class ambeIPSC(IPSC):
             _ambe           = _frame[33:52]
             print('SLOT2:', h(_frame))
         print("pt={:02X} pid={} seq={:02X} src={} dst={} ct={:02X} uk={} ci={} rsq={}".format(_packettype, _peerid,_ipsc_seq, _src_sub,_dst_sub,_call_type,_call_ctrl_info,_call_info,_rtp_seq))
-    
+
 if __name__ == '__main__':
     import argparse
     import os
@@ -226,9 +226,9 @@ if __name__ == '__main__':
     import signal
     from dmr_utils.utils import try_download, mk_id_dict
 
-    from ipsc.dmrlink_log import config_logging    
+    from ipsc.dmrlink_log import config_logging
     from ipsc.dmrlink_config import build_config
-    
+
     # Change the current directory to the location of the application
     os.chdir(os.path.dirname(os.path.realpath(sys.argv[0])))
 
@@ -237,26 +237,26 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--config', action='store', dest='CFG_FILE', help='/full/path/to/config.file (usually dmrlink.cfg)')
     parser.add_argument('-ll', '--log_level', action='store', dest='LOG_LEVEL', help='Override config file logging level.')
     parser.add_argument('-lh', '--log_handle', action='store', dest='LOG_HANDLERS', help='Override config file logging handler.')
-    parser.add_argument('-b','--bridge_config', action='store', dest='BRIDGE_CONFIG_FILE', help='/full/path/to/bridgeconfig.cfg (default HB_Bridge.cfg)')
+    parser.add_argument('-b','--bridge_config', action='store', dest='BRIDGE_CONFIG_FILE', help='/full/path/to/bridgeconfig.cfg (default IPSC_Bridge.cfg)')
     cli_args = parser.parse_args()
 
     # Ensure we have a path for the config file, if one wasn't specified, then use the default (top of file)
     if not cli_args.CFG_FILE:
         cli_args.CFG_FILE = os.path.dirname(os.path.abspath(__file__))+'/dmrlink.cfg'
-        
+
     # Ensure we have a path for the bridge config file, if one wasn't specified, then use the default (top of file)
     if not cli_args.BRIDGE_CONFIG_FILE:
         cli_args.BRIDGE_CONFIG_FILE = os.path.dirname(os.path.abspath(__file__))+'/IPSC_Bridge.cfg'
-    
+
     # Call the external routine to build the configuration dictionary
     CONFIG = build_config(cli_args.CFG_FILE)
-    
+
     # Call the external routing to start the system logger
     if cli_args.LOG_LEVEL:
         CONFIG['LOGGER']['LOG_LEVEL'] = cli_args.LOG_LEVEL
     if cli_args.LOG_HANDLERS:
         CONFIG['LOGGER']['LOG_HANDLERS'] = cli_args.LOG_HANDLERS
-    logger = config_logging(CONFIG['LOGGER'])  
+    logger = config_logging(CONFIG['LOGGER'])
 
     logger.info('DMRlink \'IPSC_Bridge.py\' (c) 2015 N0MJS & the K0USY Group - SYSTEM STARTING...')
     logger.info('Version %s', __version__)
@@ -270,24 +270,24 @@ if __name__ == '__main__':
         # Try updating subscriber aliases file
         result = try_download(CONFIG['ALIASES']['PATH'], CONFIG['ALIASES']['SUBSCRIBER_FILE'], CONFIG['ALIASES']['SUBSCRIBER_URL'], CONFIG['ALIASES']['STALE_TIME'])
         logger.info(result)
-        
+
     # Make Dictionaries
     peer_ids = mk_id_dict(CONFIG['ALIASES']['PATH'], CONFIG['ALIASES']['PEER_FILE'])
     if peer_ids:
         logger.info('ID ALIAS MAPPER: peer_ids dictionary is available')
-        
+
     subscriber_ids = mk_id_dict(CONFIG['ALIASES']['PATH'], CONFIG['ALIASES']['SUBSCRIBER_FILE'])
     if subscriber_ids:
         logger.info('ID ALIAS MAPPER: subscriber_ids dictionary is available')
-    
+
     talkgroup_ids = mk_id_dict(CONFIG['ALIASES']['PATH'], CONFIG['ALIASES']['TGID_FILE'])
     if talkgroup_ids:
         logger.info('ID ALIAS MAPPER: talkgroup_ids dictionary is available')
-    
+
     # Shut ourselves down gracefully with the IPSC peers.
     def sig_handler(_signal, _frame):
         logger.info('*** DMRLINK IS TERMINATING WITH SIGNAL %s ***', str(_signal))
-    
+
         for system in systems:
             this_ipsc = systems[system]
             logger.info('De-Registering from IPSC %s', system)
@@ -307,7 +307,5 @@ if __name__ == '__main__':
         if CONFIG['SYSTEMS'][system]['LOCAL']['ENABLED']:
             systems[system] = ambeIPSC(system, CONFIG, logger, report_server)
             reactor.listenUDP(CONFIG['SYSTEMS'][system]['LOCAL']['PORT'], systems[system], interface=CONFIG['SYSTEMS'][system]['LOCAL']['IP'])
-    
+
     reactor.run()
-
-
