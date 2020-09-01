@@ -150,7 +150,7 @@ class ambeIPSC(IPSC):
         if _payload_type == BURST_DATA_TYPE['VOICE_HEAD']:
             _stream_id       = int_id(_data[5:6])                 # int8  looks like a sequence number for a packet
             if (_stream_id != _tx_slot.stream_id):
-                self.ipsc_ambe.begin_call(_ts, _src_sub, _dst_sub, _peerid, self.cc, _seq, _stream_id)
+                self.ipsc_ambe.begin_call(_ts, _src_sub, _dst_sub, _peerid, self._cc, _seq, _stream_id)
             _tx_slot.lastSeq = _seq
         if _payload_type == BURST_DATA_TYPE['VOICE_TERM']:
             self.ipsc_ambe.end_call(_tx_slot)
